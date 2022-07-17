@@ -1,0 +1,63 @@
+version: '3'
+
+services:
+  web:
+    container_name: web-django-local
+    build:
+      context: ./app
+    networks:
+      - django-local
+    depends_on:
+      - db
+    volumes:
+      - ./app:/usr/src/app
+      - web-static-local:/usr/src/app/static
+    environment:
+      - DB_NAME=${POSTGRES_DB}
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_HOST=db
+      - DB_PORT=5432
+    command: bash -c "python manage.py makemigrations &&
+      python manage.py migrate &&
+      python manage.py collectstatic --noinput &&
+      python manage.py runserver 0.0.0.0:1234"
+
+
+  nginx:
+    container_name: nginx-django-local
+    image: nginx:latest
+    depends_on:
+      - web
+    ports:
+      - ${NGINX_PORT:-8100}:9000
+    volumes:
+      - web-static-local:/usr/src/app/static
+      - ./config/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - django-local
+
+
+  db:
+    container_name: db-django-local
+    image: postgres:14-alpine
+    environment:
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+    volumes:
+      - db-django-local:/var/lib/postgresql/data/
+    ports:
+      - ${LOCAL_POSTRGRES_PORT:-5432}:5432
+    networks:
+      - django-local
+
+
+volumes:
+  web-static-local:
+  db-django-local:
+
+networks:
+  django-local:
+    driver: bridge
+  
