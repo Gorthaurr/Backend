@@ -1,10 +1,12 @@
-// routes/logout.js
-const express = require('express');
-const router = express.Router();
+const { Token } = require('../models');
 
-router.post('/logout', (req, res) => {
-    // Просто удаляем токен на клиенте
-    res.json({ message: 'Logged out successfully' });
-});
+exports.logout = async (req, res) => {
+    const token = req.headers.authorization.split(' ')[1];
 
-module.exports = router;
+    try {
+        await Token.destroy({ where: { token } });
+        res.json({ message: "Выход успешен" });
+    } catch (error) {
+        res.status(500).json({ message: "Ошибка выхода", error: error.message });
+    }
+};

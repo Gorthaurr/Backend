@@ -1,17 +1,16 @@
-// backend/routes/generateLink.js
-const express = require('express');
-const path = require('path');
-const router = express.Router();
+const { Device } = require('../models');
 
-// Генерация ссылки для скачивания exe
-router.get('/', (req, res) => {
-    // Путь к exe файлу
-    const exeFilePath = path.join(__dirname, '..', 'files', 'setup_driver.exe'); // Убедитесь, что файл находится в папке 'files'
+exports.generateLink = async (req, res) => {
+    const { deviceName } = req.body;
 
-    // Генерация уникальной ссылки на файл (можно использовать UUID или простую строку)
-    const downloadLink = `http://localhost:5000/download/${encodeURIComponent('setup_driver.exe')}`;
+    try {
+        const device = await Device.create({ name: deviceName, user_id: req.user.id });
 
-    res.json({ downloadLink });
-});
+        const file = encodeURIComponent("setup_driver.exe");
+        const url = `${req.protocol}://${req.get('host')}/download/${file}`;
 
-module.exports = router;
+        res.json({ url, deviceId: device.id });
+    } catch (error) {
+        res.status(500).json({ message: "Ошибка генерации ссылки", error: error.message });
+    }
+};

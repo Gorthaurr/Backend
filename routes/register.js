@@ -1,27 +1,27 @@
-// routes/register.js
-const express = require('express');
+// backend/routes/register.js
+const { User } = require('../models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { User } = require('../models'); // используйте модель для работы с БД
-const router = express.Router();
 
-router.post('/register', async (req, res) => {
+exports.register = async (req, res) => {
     const { email, password } = req.body;
-
-    // Хешируем пароль
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const JWT_SECRET = process.env.JWT_SECRET;
 
     try {
-        // Сохраняем пользователя в базе данных
-        const user = await User.create({
-            email,
-            password: hashedPassword,
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = await User.create({ email, password: hashedPassword });
+
+        const token = jwt.sign(
+            { userId: user.id, email: user.email },
+            JWT_SECRET,
+            { expiresIn: '1d' }
+        );
+
+        res.status(201).json({
+            token,
+            user: { id: user.id, email: user.email },
         });
-
-        res.status(201).json({ message: 'User registered successfully' });
     } catch (error) {
-        res.status(400).json({ message: 'Error registering user', error });
+        res.status(500).json({ error: 'Ошибка регистрации' });
     }
-});
-
-module.exports = router;
+};

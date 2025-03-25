@@ -1,22 +1,17 @@
-// routes/user.js
-const express = require('express');
-const jwt = require('jsonwebtoken');
-const router = express.Router();
+const { User } = require('../models');
 
-router.get('/user', (req, res) => {
-    const token = req.headers['authorization']?.split(' ')[1]; // Получаем токен из заголовков
+exports.getUser = async (req, res) => {
+    try {
+        const user = await User.findByPk(req.user.id, {
+            attributes: ['id', 'email', 'createdAt'],
+        });
 
-    if (!token) {
-        return res.status(401).json({ message: 'No token provided' });
-    }
-
-    jwt.verify(token, 'secret', (err, decoded) => {
-        if (err) {
-            return res.status(401).json({ message: 'Invalid token' });
+        if (!user) {
+            return res.status(404).json({ message: "Пользователь не найден" });
         }
 
-        res.json({ user: { email: decoded.email } });
-    });
-});
-
-module.exports = router;
+        res.json({ user });
+    } catch (error) {
+        res.status(500).json({ message: "Ошибка при получении данных пользователя", error: error.message });
+    }
+};
