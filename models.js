@@ -20,7 +20,17 @@ const User = sequelize.define('User', {
 
 const Device = sequelize.define('Device', {
     name: { type: DataTypes.STRING, allowNull: false },
-    status: { type: DataTypes.BOOLEAN, defaultValue: false },
+    status: { 
+        type: DataTypes.ENUM('true', 'false'),
+        defaultValue: 'false',
+        get() {
+            return this.getDataValue('status') === 'true';
+        },
+        set(value) {
+            this.setDataValue('status', value ? 'true' : 'false');
+        }
+    },
+    user_id: { type: DataTypes.INTEGER, allowNull: false }
 });
 
 const Token = sequelize.define('Token', {
@@ -42,6 +52,10 @@ Token.belongsTo(User, { foreignKey: 'user_id' });
 Device.hasMany(DeviceBlockSchedule, { foreignKey: 'device_id' });
 DeviceBlockSchedule.belongsTo(Device, { foreignKey: 'device_id' });
 
-sequelize.sync();
+sequelize.sync({ alter: true }).then(() => {
+    console.log('База данных синхронизирована');
+}).catch(error => {
+    console.error('Ошибка синхронизации базы данных:', error);
+});
 
 module.exports = { sequelize, User, Device, Token, DeviceBlockSchedule };

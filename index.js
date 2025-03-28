@@ -9,6 +9,7 @@ const logout = require('./routes/logout');
 const generateLink = require('./routes/generateLink');
 const blockDevice = require('./routes/blockDevice');
 const devices = require('./routes/devices');
+const download = require('./routes/download');
 
 const app = express();
 
@@ -44,10 +45,8 @@ app.get('/devices/:id', auth, devices.getDeviceById);
 // Затем определяем общий маршрут
 app.get('/devices', auth, devices.getDevices);
 
-app.get('/download/:file', (req, res) => {
-    const path = require('path');
-    res.download(path.join(__dirname, 'files', decodeURIComponent(req.params.file)));
-});
+// Маршрут для скачивания файлов
+app.get('/download/:file', download.downloadFile);
 
 // Обработка ошибок
 app.use((err, req, res, next) => {
@@ -59,4 +58,4 @@ app.use((err, req, res, next) => {
     res.status(500).json({ message: 'Внутренняя ошибка сервера', error: err.message });
 });
 
-app.listen(5000, () => console.log('✅ Сервер запущен на порту 5000'));
+app.listen(5000, '0.0.0.0', () => console.log('✅ Сервер запущен на порту 5000'));
